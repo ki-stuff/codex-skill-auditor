@@ -6,7 +6,7 @@ Der Codex Skill Auditor prüft fremde oder unbekannte Agent-Skills, bevor du sie
 
 Der automatische Scan ist eine **Erstprüfung**, kein Sicherheitszertifikat. Ein grünes Ergebnis bedeutet ausschließlich: Im exakt geprüften Stand wurden keine offensichtlichen Befunde erkannt.
 
-[Hier mehr Infos mit einem Beispiel](https://online-marketing49.de/skill-auditor/codex/)
+[Hier mehr Infos mit einem Beispiel](https://online-marketing49.de/codex-skill-auditor/)
 
 ## Auf einen Blick
 
@@ -177,7 +177,7 @@ Codex Skill Auditor reviews new, external, or unfamiliar agent skills before you
 
 The automated scan is a **first-pass review**, not a security certificate. A green result only means that no obvious findings were detected in the exact version that was scanned.
 
-[German landing page with real-world examples](https://online-marketing49.de/skill-auditor/codex/)
+[More information with an example](https://online-marketing49.de/codex-skill-auditor/)
 
 ## At a glance
 
