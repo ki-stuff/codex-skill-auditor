@@ -1,8 +1,7 @@
 <!--
-  Stil-Referenz fuer den Inventar-Modus des Codex Skill Auditors.
-  Das ist KEINE Datei, die ein Script automatisch befuellt -- Claude schreibt
-  die finale HTML-Datei direkt, mit den echten Kategorien/Skills/Status aus
-  Phase 7.1-7.3, im selben visuellen Stil wie hier gezeigt.
+  Selbstenthaltene Vorlage fuer den Inventar-Modus des Codex Skill Auditors.
+  audit.py ersetzt die drei Platzhalter fuer Zeitpunkt, Anzahl und
+  Statusbereiche. Skill-Inhalte werden vor dem Einsetzen HTML-escaped.
 
   Prinzipien:
   - Komplett selbstenthalten: keine externen Fonts, keine CDNs, kein Netzwerk-
@@ -67,8 +66,14 @@
   .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
   .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.4rem; }
   .card h3 { font-size: 0.95rem; margin: 0; }
-  .badge { font-size: 0.85rem; flex-shrink: 0; }
+  .badge { font-size: 0.95rem; flex-shrink: 0; }
   .card p { font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4; }
+  .card .meta { margin-top: 0.8rem; padding-top: 0.7rem; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+  .card .meta b { color: var(--text); }
+  .card code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.75rem; }
+  .status-clear { filter: saturate(1.15); }
+  .status-caution, .status-stale, .status-reject { filter: saturate(1.2); }
+  .empty { text-align: center; color: var(--text-muted); padding: 2rem; border: 1px dashed var(--border); border-radius: 0.9rem; }
 
   footer { text-align: center; margin-top: 3rem; font-size: 0.8rem; color: var(--text-muted); }
   footer a { color: var(--accent); text-decoration: none; }
@@ -80,7 +85,7 @@
 
   <header>
     <h1>Skill-Inventar</h1>
-    <p>Stand: [DATUM] · [ANZAHL] installierte Skills</p>
+    <p>Stand: {{GENERATED_AT}} · {{TOTAL}} installierte Skills</p>
     <div class="legend">
       <span>🟢 keine offensichtlichen Befunde</span>
       <span>🟡 manuell prüfen</span>
@@ -90,28 +95,7 @@
     </div>
   </header>
 
-  <!-- Pro thematischer Kategorie ein Block. Kategorien und Zuordnung werden
-       von Claude aus den echten Skill-Descriptions abgeleitet, nicht fest
-       vorgegeben. -->
-  <div class="category">
-    <h2>[Kategorie-Name] <span class="count">[N] Skills</span></h2>
-    <div class="grid">
-      <div class="card">
-        <div class="card-head">
-          <h3>[skill-name]</h3>
-          <span class="badge">🟢</span>
-        </div>
-        <p>[Kurzbeschreibung aus der Skill-Description, 1-2 Sätze]</p>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <h3>[skill-name]</h3>
-          <span class="badge">⚪</span>
-        </div>
-        <p>[Kurzbeschreibung]</p>
-      </div>
-    </div>
-  </div>
+  {{STATUS_SECTIONS}}
 
   <footer>
     Erstellt mit <a href="https://github.com/ki-stuff/codex-skill-auditor">Codex Skill Auditor</a>

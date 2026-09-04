@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 1.0.3 – 2026-09-04
+
+### Visuelles Skill-Inventar für Menschen
+
+- Der Inventar-Modus kann mit `--inventory-html <ziel>` ein selbstenthaltenes HTML-Dashboard erzeugen.
+- Das Dashboard gruppiert Skills nach Prüfstatus und zeigt Kurzbeschreibung, Herkunft, Pfad und den zugehörigen Statuspunkt.
+- Die Legende unterscheidet 🟢 keine offensichtlichen Befunde, 🟡 manuell prüfen, 🔴 nicht verwenden, 🟠 veraltet und ⚪ nicht geprüft.
+- Namen, Beschreibungen, Quellen und Pfade aus fremden Skills werden vor der HTML-Ausgabe escaped.
+- Die Vorlage verweist nicht mehr fälschlich auf Claude und wird jetzt direkt vom Scanner befüllt.
+- Ohne ausdrücklich gewähltes HTML-Ziel bleibt der Inventar-Modus read-only.
+- Ein neuer Regressionstest prüft Platzhalterersetzung, HTML-Escaping, Statusdarstellung und Dateiausgabe. Die Testsuite umfasst damit 21 Tests.
+
 ## 1.0.2 – 2026-09-04
 
 ### Umgehung über größere Abstände erschwert

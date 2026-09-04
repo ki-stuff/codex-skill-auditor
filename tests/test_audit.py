@@ -299,6 +299,42 @@ class AuditTests(unittest.TestCase):
             self.assertEqual(entries[0]["status"], "unaudited")
             self.assertTrue(entries[0]["sources"][0].startswith("plugin:"))
 
+    def test_inventory_html_dashboard_escapes_skill_content(self):
+        entries = [
+            {
+                "name": "<script>alert('x')</script>",
+                "description": "Skill mit <b>ungeprüftem</b> Inhalt.",
+                "path": "C:\\Skills\\<fremd>",
+                "sources": ["plugin:<extern>"],
+                "status": "reject",
+                "verdict": "🔴 REJECT",
+            },
+            {
+                "name": "lokaler-skill",
+                "description": "Nur lokale Verarbeitung.",
+                "path": "C:\\Skills\\lokal",
+                "sources": ["skill-root:C:\\Skills"],
+                "status": "clear",
+                "verdict": "🟢 KEINE OFFENSICHTLICHEN BEFUNDE",
+            },
+        ]
+
+        rendered = audit.render_inventory_html(entries)
+
+        self.assertNotIn("{{GENERATED_AT}}", rendered)
+        self.assertNotIn("{{TOTAL}}", rendered)
+        self.assertNotIn("{{STATUS_SECTIONS}}", rendered)
+        self.assertNotIn("<script>alert('x')</script>", rendered)
+        self.assertIn("&lt;script&gt;alert(&#x27;x&#x27;)&lt;/script&gt;", rendered)
+        self.assertIn("🔴 Nicht verwenden", rendered)
+        self.assertIn("🟢 Keine offensichtlichen Befunde", rendered)
+        self.assertNotIn("Claude schreibt", rendered)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "skill-inventar.html"
+            self.assertEqual(audit.write_inventory_html(entries, output), output)
+            self.assertEqual(output.read_text(encoding="utf-8"), rendered)
+
 
 if __name__ == "__main__":
     unittest.main()

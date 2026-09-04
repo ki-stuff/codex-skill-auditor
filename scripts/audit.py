@@ -2,6 +2,7 @@
 """Codex Skill Auditor - read-only Sicherheits-Erstpruefung fuer Agent Skills."""
 
 import argparse
+import html
 import sys
 import os
 import re
@@ -12,7 +13,7 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
 
-SCANNER_VERSION = "1.0.2"
+SCANNER_VERSION = "1.0.3"
 SCANNER_BASE_COMMIT = "f41dd61225fc056049ab0d909c3c3c442263474b"
 
 # Windows: UTF-8 Output erzwingen
@@ -984,6 +985,67 @@ def write_inventory_json(entries: list[dict], output_path: Path) -> None:
     output_path.write_text(json.dumps(entries, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+INVENTORY_STATUS_META = {
+    "reject": ("🔴", "Nicht verwenden", "status-reject"),
+    "caution": ("🟡", "Manuell prüfen", "status-caution"),
+    "stale": ("🟠", "Veraltet – erneut prüfen", "status-stale"),
+    "unaudited": ("⚪", "Nicht geprüft", "status-unaudited"),
+    "clear": ("🟢", "Keine offensichtlichen Befunde", "status-clear"),
+}
+
+
+def render_inventory_html(entries: list[dict], template_path: Optional[Path] = None) -> str:
+    """Erzeugt ein selbstenthaltenes, HTML-escaped Status-Dashboard."""
+    selected_template = template_path or Path(__file__).with_name("inventory_template.html")
+    template = selected_template.read_text(encoding="utf-8")
+    sections = []
+
+    for status, (symbol, label, css_class) in INVENTORY_STATUS_META.items():
+        matching = [entry for entry in entries if entry.get("status") == status]
+        if not matching:
+            continue
+        cards = []
+        for entry in matching:
+            name = html.escape(str(entry.get("name") or "Unbenannter Skill"))
+            description = html.escape(str(entry.get("description") or "Keine Beschreibung verfügbar."))
+            path = html.escape(str(entry.get("path") or "Unbekannter Pfad"))
+            sources = html.escape(", ".join(str(source) for source in entry.get("sources", [])) or "unbekannt")
+            verdict = html.escape(str(entry.get("verdict") or label))
+            cards.append(
+                "<article class=\"card\">"
+                "<div class=\"card-head\">"
+                f"<h3>{name}</h3><span class=\"badge {css_class}\" title=\"{html.escape(label)}\">{symbol}</span>"
+                "</div>"
+                f"<p>{description}</p>"
+                f"<p class=\"meta\"><b>Status:</b> {verdict}<br><b>Quelle:</b> {sources}<br>"
+                f"<b>Pfad:</b> <code>{path}</code></p>"
+                "</article>"
+            )
+        sections.append(
+            "<section class=\"category\">"
+            f"<h2>{symbol} {html.escape(label)} <span class=\"count\">{len(matching)} Skills</span></h2>"
+            f"<div class=\"grid\">{''.join(cards)}</div>"
+            "</section>"
+        )
+
+    if not sections:
+        sections.append('<p class="empty">Keine installierten Skills gefunden.</p>')
+
+    generated_at = datetime.datetime.now().astimezone().strftime("%d.%m.%Y, %H:%M %Z")
+    return (
+        template.replace("{{GENERATED_AT}}", html.escape(generated_at))
+        .replace("{{TOTAL}}", str(len(entries)))
+        .replace("{{STATUS_SECTIONS}}", "\n".join(sections))
+    )
+
+
+def write_inventory_html(entries: list[dict], output_path: Path) -> Path:
+    """Schreibt das Dashboard nur an das ausdrücklich gewählte Ziel."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_inventory_html(entries), encoding="utf-8")
+    return output_path
+
+
 def print_inventory_summary(entries: list[dict]) -> None:
     total = len(entries)
     unaudited = sum(1 for e in entries if e.get("status") == "unaudited")
@@ -1140,6 +1202,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("skill_paths", nargs="*", help="Zu prüfende Skill-Verzeichnisse")
     parser.add_argument("--inventory", action="store_true", help="Installierte Codex Skills inventarisieren")
     parser.add_argument("--output", type=Path, help="Explizites Ziel für JSON; ohne Option wird nichts gespeichert")
+    parser.add_argument(
+        "--inventory-html",
+        type=Path,
+        help="Explizites Ziel für ein selbstenthaltenes HTML-Dashboard; nur mit --inventory",
+    )
     parser.add_argument("--json", action="store_true", dest="json_stdout", help="JSON nur auf stdout ausgeben")
     parser.add_argument("--skills-root", action="append", type=Path, default=[], help="Zusätzliches Skill-Verzeichnis")
     parser.add_argument("--plugins-root", action="append", type=Path, default=[], help="Zusätzliches Plugin-Verzeichnis")
@@ -1154,7 +1221,11 @@ def _audit_output_path(requested: Path, result: SkillAuditResult, batch: bool) -
 
 
 def main(argv: Optional[list[str]] = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.inventory_html and not args.inventory:
+        parser.error("--inventory-html kann nur zusammen mit --inventory verwendet werden")
 
     if args.inventory:
         skill_roots = args.skills_root or default_skill_roots()
@@ -1167,6 +1238,12 @@ def main(argv: Optional[list[str]] = None) -> int:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             write_inventory_json(entries, output_path)
             print(f"Rohdaten geschrieben: {output_path}")
+        if args.inventory_html:
+            html_path = args.inventory_html
+            if html_path.suffix.lower() != ".html":
+                html_path = html_path / "skill-inventar.html"
+            write_inventory_html(entries, html_path)
+            print(f"HTML-Dashboard geschrieben: {html_path}")
         if args.json_stdout:
             print(json.dumps(entries, indent=2, ensure_ascii=False))
         else:

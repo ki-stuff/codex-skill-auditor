@@ -1,6 +1,6 @@
 # Codex Skill Auditor
 
-Version 1.0.2
+Version 1.0.3
 
 Der Codex Skill Auditor prüft fremde oder unbekannte Agent-Skills, bevor du sie installierst oder verwendest. Er sucht nach auffälligen Mustern wie Prompt Injection, Datenabfluss, versteckter Codeausführung und dauerhaften Änderungen an deiner Codex-Konfiguration.
 
@@ -102,6 +102,14 @@ python .\scripts\audit.py --inventory
 ```
 
 Für eigene Installationsorte kannst du `--skills-root` oder `--plugins-root` mehrfach angeben.
+
+Ein selbstenthaltenes HTML-Dashboard für Menschen erzeugen:
+
+```powershell
+python .\scripts\audit.py --inventory --inventory-html ".\reports\skill-inventar.html"
+```
+
+Das Dashboard gruppiert installierte Skills nach ihrem Status und zeigt Herkunft, Pfad und Kurzbeschreibung. Die Legende unterscheidet 🟢 keine offensichtlichen Befunde, 🟡 manuell prüfen, 🔴 nicht verwenden, 🟠 veraltet und ⚪ nicht geprüft. Fremde Skill-Texte werden vor dem Einsetzen in HTML escaped. Ohne ein ausdrücklich gewähltes Ziel wird keine HTML-Datei geschrieben.
 
 ## Ergebnisse verstehen
 
