@@ -10,6 +10,7 @@
 - Namen, Beschreibungen, Quellen und Pfade aus fremden Skills werden vor der HTML-Ausgabe escaped.
 - Die Vorlage verweist nicht mehr fälschlich auf Claude und wird jetzt direkt vom Scanner befüllt.
 - Ohne ausdrücklich gewähltes HTML-Ziel bleibt der Inventar-Modus read-only.
+- Die README ist vollständig zweisprachig aufgebaut: Deutsch zuerst, Englisch darunter. Beide Fassungen erklären das visuelle Inventar und seine fünf Statuspunkte.
 - Ein neuer Regressionstest prüft Platzhalterersetzung, HTML-Escaping, Statusdarstellung und Dateiausgabe. Die Testsuite umfasst damit 21 Tests.
 
 ## 1.0.2 – 2026-09-04
