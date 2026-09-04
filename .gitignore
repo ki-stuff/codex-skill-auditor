@@ -1,0 +1,9 @@
+/ftp/
+/files/
+/reports/
+__pycache__/
+*.py[cod]
+*-audit.json
+skill-inventory-raw.json
+skill-inventory-cache.json
+.pytest_cache/

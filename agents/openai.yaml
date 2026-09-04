@@ -1,0 +1,7 @@
+interface:
+  display_name: "Codex Skill Auditor"
+  short_description: "Prüft Codex Skills vor der Installation"
+  default_prompt: "Nutze $codex-skill-auditor, um diesen Skill vor der Installation read-only zu prüfen."
+
+policy:
+  allow_implicit_invocation: true
