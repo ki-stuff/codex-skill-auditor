@@ -6,7 +6,7 @@ def prompts():
     source = Path(__file__).resolve().parents[2] / 'references' / 'hilfe-bei-befunden.md'
     text = source.read_text(encoding='utf-8')
     blocks = [line[2:] for line in text.splitlines() if line.startswith('> ')]
-    if len(blocks) != 2 or any(len(b) > 8000 for b in blocks):
+    if len(blocks) != 3 or any(len(b) > 8000 for b in blocks):
         raise ValueError('Mitgelieferte Hilfsprompts unvollständig')
     return blocks
 
@@ -14,12 +14,13 @@ def prompts():
 def next_steps(data):
     status = data.get('scanner_assessment', {}).get('status', data.get('status', 'unavailable'))
     coverage = data.get('coverage', {}).get('status', 'unknown')
-    yellow, grey = prompts()
+    yellow, grey, red = prompts()
     if status == 'reject':
         steps = ['Installation und Nutzung zunächst aussetzen.',
-                 'Den konkreten roten Befund fachlich klären; eine neue Einordnung getrennt vom Originalbericht festhalten.',
-                 'Bei ungeklärtem Risiko eine Alternative ohne diese Erweiterung wählen.']
-        prompt = 'Ein Auditor meldet einen roten Befund. Keine Freigabe erteilen. ' + yellow.replace('einen gelben Auditor-Befund', 'diesen Auditor-Befund')
+                 'Jede rote Fundstelle im Original lesen und einordnen: Dokumentationstext, zweckgebundenes Werkzeugverhalten oder echtes Risiko.',
+                 'Die Einordnung getrennt vom Originalbericht und mit Datum festhalten; die rote Ampel bleibt bestehen.',
+                 'Bei echtem oder ungeklärtem Risiko eine Alternative ohne diese Erweiterung wählen.']
+        prompt = red
         if coverage != 'complete_for_text_scope':
             steps.append('Zusätzlich die unter Prüflücken aufgeführten ungeprüften Teile klären; der rote Befund bleibt bestehen.')
             prompt += ' Zusätzlich ist die Prüfabdeckung unvollständig. Hilf mir, die im Bericht genannten Prüflücken und ungeprüften Teile separat zu klären. Eine Erklärung des roten Befunds ersetzt diese fehlende Prüfung nicht; Rot bleibt bestehen.'
