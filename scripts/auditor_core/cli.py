@@ -23,7 +23,7 @@ def build_parser(edition='codex') -> argparse.ArgumentParser:
         description=EDITIONS[edition]['name'] + ': Agent-Erweiterungen statisch prüfen.',
     )
     parser.add_argument("skill_paths", nargs="*", help="Lokale Verzeichnisse, Einzeldateien oder ZIP/TAR-Archive")
-    parser.add_argument("--inventory", action="store_true", help="Lokale Skills inventarisieren; nur Codex/Claude Code")
+    parser.add_argument("--inventory", action="store_true", help="Lokale Skills inventarisieren; nur Codex und Claude im Terminal/Code-Tab (--surface cli)")
     parser.add_argument("--output", type=Path, help="Explizites Ziel für JSON; ohne Option wird nichts gespeichert")
     parser.add_argument('--html', type=Path, help='Explizites HTML-Ziel für einen Auditlauf, auch für mehrere Prüfobjekte')
     parser.add_argument('--surface', choices=tuple(EDITIONS[edition]['surfaces']), default=EDITIONS[edition]['default'],
@@ -63,8 +63,9 @@ def _main(argv: Optional[list[str]] = None, edition='codex') -> int:
         print(json.dumps(capability_report(edition, args.surface), ensure_ascii=False, indent=2))
         return 0
 
+    inventory_allowed = args.surface in EDITIONS[edition]['inventory_surfaces']
     if args.render_inventory:
-        if edition == 'claude-desktop':
+        if not inventory_allowed:
             parser.error('Kein Host-Inventar in diesem Profil')
         if args.inventory or args.skill_paths or not args.inventory_html or args.output or args.html:
             parser.error('--render-inventory nur mit --inventory-html und optional --categories verwenden')
@@ -89,10 +90,10 @@ def _main(argv: Optional[list[str]] = None, edition='codex') -> int:
         parser.error('Im Inventarmodus --inventory-html verwenden')
 
     if args.inventory:
-        if edition == 'claude-desktop' or args.content_review_only:
+        if not inventory_allowed or args.content_review_only:
             parser.error('Kein Host-Inventar in diesem Profil')
         profile = EDITIONS[edition]['surfaces'][args.surface]
-        if edition == 'claude-code':
+        if edition == 'claude':
             from .claude_inventory import default_roots, scan_claude_inventory
             default_skills, default_plugins = default_roots()
             skill_roots, plugin_roots = args.skills_root or default_skills, args.plugins_root or default_plugins
@@ -111,7 +112,7 @@ def _main(argv: Optional[list[str]] = None, edition='codex') -> int:
         if args.categories:
             from .inventory import load_categories
             categories = load_categories(args.categories)  # vor dem Scan prüfen
-        if edition == 'claude-code':
+        if edition == 'claude':
             entries = scan_claude_inventory(skill_roots, plugin_roots, args.reports_dir, profile, args.surface)
         else:
             entries = scan_installed_skills(skill_roots, plugin_roots, args.reports_dir, profile, args.surface)

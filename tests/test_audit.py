@@ -538,7 +538,7 @@ class CategoryTilesTests(unittest.TestCase):
                                    side_effect=AssertionError("Kein Scan erwartet")), \
                     contextlib.redirect_stderr(io.StringIO()):
                 code = core.cli.main(["--render-inventory", str(saved), "--categories", str(cats),
-                                      "--inventory-html", str(out)], edition="claude-code")
+                                      "--inventory-html", str(out)], edition="claude")
             self.assertEqual(code, 0)
             html_text = out.read_text(encoding="utf-8")
         self.assertIn("ohne neuen Scan", html_text)
