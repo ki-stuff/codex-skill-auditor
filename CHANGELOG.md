@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 1.2.0 – 2026-11-08
+
+### Startdialog und aktive Hilfe
+
+- **Umgebungsprüfung vor dem Start:** `--capabilities` misst Paketvollständigkeit (gegen `BUNDLE.json`), Python ab 3.11 und lesbare Skill-Ordner, ohne deren Inhalt aufzulisten, und nennt die passenden Startoptionen.
+- **Fester Startdialog** „Was möchtest du tun?“: Skill prüfen, Bestandsübersicht, Hilfe zu einem Ergebnis, kurz erklären.
+- **Fester Abschluss** „Wie geht es weiter?“ nach jedem Ergebnis, mit aktivem Hilfsangebot bei Gelb, Grau und Rot.
+- **Hilfe bei Rot:** eigener Hilfsprompt und Leseschritt; die rote Ampel bleibt bestehen.
+- **Installation unvollständig** wird sofort gemeldet, statt improvisiert zu prüfen.
+- Gemeinsamer Kern 1.2.0, jetzt für Codex und die zusammengeführte Claude-Fassung `skill-auditor` 2.7.0. Scannerregeln und Ampellogik unverändert.
+
 ## 1.1.0 – 2026-11-08
 
 ### Gemeinsamer Kern, sichere Auswertung
