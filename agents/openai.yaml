@@ -1,7 +1,7 @@
 interface:
   display_name: "Codex Skill Auditor"
-  short_description: "Prüft Codex Skills vor der Installation"
-  default_prompt: "Nutze $codex-skill-auditor, um diesen Skill vor der Installation read-only zu prüfen."
+  short_description: "Prüft Agent-Erweiterungen und erklärt nächste Schritte"
+  default_prompt: "Nutze $codex-skill-auditor, um diese Agent-Erweiterung vor der Nutzung nur lesend auf Risiken und Prüflücken zu prüfen."
 
 policy:
   allow_implicit_invocation: true

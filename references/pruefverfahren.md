@@ -28,7 +28,8 @@ Der Scanner unterscheidet:
 - `CRITICAL`: direkt hochkritisches Muster oder gefährliche Kombination,
 - `HIGH`: hohes Missbrauchspotenzial; Kontextprüfung zwingend,
 - `MEDIUM`: auffällig und erklärungsbedürftig,
-- `CONTEXT`: Treffer in einem Markdown-Codeblock oder einer ausdrücklich formulierten Sicherheitswarnung beziehungsweise einem Negativbeispiel; kein automatisches Urteil.
+- `CONTEXT`: Treffer in einem Markdown-Codeblock außerhalb der `SKILL.md`; kein automatisches Urteil.
+- Treffer in Codeblöcken der `SKILL.md` oder neben Warnwörtern („never“, „do not“, „vermeiden“ …) werden höchstens auf `MEDIUM` gesenkt, also Gelb, nie Grün. Steht das Warnwort nur in den Zeilen davor, bleibt eine gefährliche Kombination ein automatisches `REJECT`. Warnwörter sind leicht einzufügen und daher kein Harmlosigkeitsbeleg.
 
 Eine Reject-Kombination ist stärker als ein Einzelmuster, etwa Geheimniszugriff und Netzwerkübertragung in einem lokalen Block von höchstens drei Zeilen. Diese zeilennahe Stufe ist auf hohe Präzision ausgelegt.
 

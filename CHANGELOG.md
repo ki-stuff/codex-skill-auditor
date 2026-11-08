@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 1.1.0 – 2026-11-08
+
+### Gemeinsamer Kern, sichere Auswertung
+
+- **Gemeinsamer Scanner-Kern 1.1.0** für Codex, Claude Code und Claude Desktop. Neben Skill-Ordnern werden jetzt auch Einzeldateien, ZIP/MCPB/DXT/Wheel- und TAR-Archive (direkt gelesen, nie entpackt), Agent-Plugins, npm-/Python-Pakete und MCP-Konfigurationen statisch geprüft.
+- **Getrennte Aussagen:** Risiko, Prüfabdeckung (was wurde tatsächlich gelesen) und Aktualität werden einzeln ausgewiesen. Grau bedeutet „nicht ausreichend geprüft“ und wird nie zu Grün.
+- **Konkrete nächste Schritte** und ein kopierbarer Hilfsprompt für gelbe und graue Ergebnisse.
+- **HTML-Auswertung** mit Überblick, Kennzahlen, „Hier solltest du zuerst hinsehen“ und aufklappbaren technischen Details. Passives HTML ohne Skripte und ohne externe Ressourcen.
+- **Schutz beim Lesen:** Größen-, Zeit- und Speichergrenzen, keine Links/Reparse-Punkte, keine Ausführung von Prüfobjektcode. Erkannte Geheimwerte werden in Berichten maskiert, Rohbelege zurückgehalten.
+- **Keine automatische Ablage mehr im geprüften Skill:** Berichte entstehen nur noch an einem ausdrücklich gewählten neuen Ziel (`--output`, `--html`, `--inventory-html`).
+- **Warnwörter sind kein Freifahrtschein:** Steht vor einer gefährlichen Anweisung ein Satz mit „never“, „avoid“ oder „do not“, bleibt eine gefährliche Musterkombination ein automatisches Rot. Treffer neben Warnwörtern oder in Codeblöcken der SKILL.md werden höchstens auf Gelb gesenkt, nie auf Grün. Codeblöcke in README und Referenzen bleiben reiner Dokumentationskontext.
+- **Altberichte:** Eine `audit-result.json` früherer Fassungen im Skill-Ordner wird am exakten Format erkannt, als Ausnahme ausgewiesen und nicht mehr als Skill-Inhalt gescannt. Vorher verursachten ihre alten Fundstellen-Auszüge falsche Treffer und graue Abdeckung. Verweist eine andere Datei des Skills auf die `audit-result.json`, wird sie trotzdem vollständig geprüft, damit sich darin keine Anweisung verstecken lässt.
+- **Verweise auf Codebeispiele:** Eine gefährliche Musterkombination in einem Codeblock von README oder Referenzdateien wird gelb, sobald eine andere Datei auf diese Datei verweist (z. B. „folge dem Setup in README.md“). Ohne Verweis bleibt sie Dokumentationskontext. In der SKILL.md selbst ist eine solche Kombination immer mindestens gelb.
+- **Inventar robuster:** Die Maskierung arbeitet pro Skill. Erreicht ein einzelner Skill die Grenze, wird nur dieser Eintrag zurückgehalten, statt das ganze Inventar abzubrechen. Das Ausgabeziel wird vor dem Scan geprüft, Fehlermeldungen nennen den Grund im Klartext.
+- Python ab 3.11 erforderlich, nur Standardbibliothek, keine automatische Nachinstallation.
+- **Codex-Profile** für Kommandozeile, App und IDE (`--surface`). Das Profil dokumentiert den Kontext, beweist aber keine App-Rechte.
+
 ## 1.0.3 – 2026-09-04
 
 ### Visuelles Skill-Inventar für Menschen

@@ -7,3 +7,15 @@ __pycache__/
 skill-inventory-raw.json
 skill-inventory-cache.json
 .pytest_cache/
+/tests/_work/
+/builds/
+
+# Nur lokal: Testdaten, Prüfprotokolle und Entwicklungsunterlagen (nie veröffentlichen)
+/tests/*
+!/tests/test_audit.py
+/tools/
+/references/ap3-*
+/references/ap4-*
+/references/ap5-*
+/references/package-*.md
+/references/reportformat.md
