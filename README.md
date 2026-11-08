@@ -1,6 +1,6 @@
 # Codex Skill Auditor
 
-Version 1.1.0. Statische Erstprüfung fremder Agent-Erweiterungen für Codex, bevor du sie installierst oder verwendest.
+Version 1.2.0. Statische Erstprüfung fremder Agent-Erweiterungen für Codex, bevor du sie installierst oder verwendest.
 
 Geprüft werden Skill-Ordner, Einzeldateien, ZIP/MCPB/DXT/Wheel- und TAR-Archive (direkt gelesen, nie entpackt), Agent-Plugins, npm-/Python-Pakete und MCP-Konfigurationen. Der Auditor führt nichts aus und meldet Prompt Injection, Datenabfluss, Codeausführung, Persistenz und unnötige Berechtigungen.
 
@@ -33,4 +33,4 @@ Einstieg: [SKILL.md](SKILL.md), [Prüfverfahren](references/edition-workflow.md)
 
 ## English
 
-Version 1.1.0. Static first-pass review of skills, agent plugins, packages and MCP configurations for Codex, before you install or use them. Archives are read directly, nothing is extracted or executed. Results show risk, coverage and freshness separately, with concrete next steps and a copyable help prompt for yellow, grey and red. Each session starts with an environment check and one question; each result ends with an offer to help. Optional inventory and HTML dashboard of installed Codex skills. Requires Python 3.11+ (standard library only). Install by copying the complete `codex-skill-auditor` folder into `~/.agents/skills/`, never just `SKILL.md`. A clean result is not a security certificate.
+Version 1.2.0. Static first-pass review of skills, agent plugins, packages and MCP configurations for Codex, before you install or use them. Archives are read directly, nothing is extracted or executed. Results show risk, coverage and freshness separately, with concrete next steps and a copyable help prompt for yellow, grey and red. Each session starts with an environment check and one question; each result ends with an offer to help. Optional inventory and HTML dashboard of installed Codex skills. Requires Python 3.11+ (standard library only). Install by copying the complete `codex-skill-auditor` folder into `~/.agents/skills/`, never just `SKILL.md`. A clean result is not a security certificate.

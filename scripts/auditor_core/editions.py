@@ -9,7 +9,7 @@ from .models import SkillAuditResult
 
 # Eine Claude-Fassung für Terminal/Code-Tab, Desktop-Chat, claude.ai und Cowork (E-049).
 EDITIONS = {
-    'codex': {'name': 'codex-skill-auditor', 'version': '1.1.0',
+    'codex': {'name': 'codex-skill-auditor', 'version': '1.2.0',
               'surfaces': {'cli': 'P-CX', 'app': 'P-CX', 'ide': 'P-CX'}, 'default': 'cli',
               'inventory_surfaces': ('cli', 'app', 'ide')},
     'claude': {'name': 'skill-auditor', 'version': '2.7.0',
