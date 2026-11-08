@@ -9,13 +9,13 @@ from .safeio import InputError, valid_name
 MAX_NODES = 50000
 MAX_DEPTH = 48
 
-def check_tree(value):
+def check_tree(value, max_nodes=MAX_NODES):
     pending = [(value, 0)]
     count = 0
     while pending:
         node, depth = pending.pop()
         count += 1
-        if count > MAX_NODES or depth > MAX_DEPTH:
+        if count > max_nodes or depth > MAX_DEPTH:
             raise ValueError("Strukturgrenze überschritten")
         if isinstance(node, dict):
             pending.extend((v, depth + 1) for v in node.values())
@@ -25,7 +25,7 @@ def check_tree(value):
             raise ValueError("Nicht endliche Zahl")
     return value
 
-def strict_json(text):
+def strict_json(text, max_nodes=MAX_NODES):
     def pairs(items):
         out = {}
         for key, value in items:
@@ -34,7 +34,8 @@ def strict_json(text):
             out[key] = value
         return out
     return check_tree(json.loads(text, object_pairs_hook=pairs,
-                                 parse_constant=lambda _: (_ for _ in ()).throw(ValueError("JSON-Konstante"))))
+                                 parse_constant=lambda _: (_ for _ in ()).throw(ValueError("JSON-Konstante"))),
+                      max_nodes)
 
 def schema_errors(value, schema, root=None, key="$", depth=0):
     """Nur benötigte Keywords der fest mitgelieferten MCPB-Schemas, kein externer $ref."""

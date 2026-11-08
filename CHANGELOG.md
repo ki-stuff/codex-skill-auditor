@@ -15,6 +15,7 @@
 - **Verweise auf Codebeispiele:** Eine gefährliche Musterkombination in einem Codeblock von README oder Referenzdateien wird gelb, sobald eine andere Datei auf diese Datei verweist (z. B. „folge dem Setup in README.md“). Ohne Verweis bleibt sie Dokumentationskontext. In der SKILL.md selbst ist eine solche Kombination immer mindestens gelb.
 - **Inventar robuster:** Die Maskierung arbeitet pro Skill. Erreicht ein einzelner Skill die Grenze, wird nur dieser Eintrag zurückgehalten, statt das ganze Inventar abzubrechen. Das Ausgabeziel wird vor dem Scan geprüft, Fehlermeldungen nennen den Grund im Klartext.
 - Python ab 3.11 erforderlich, nur Standardbibliothek, keine automatische Nachinstallation.
+- **Bestandsübersicht als Themen-Kacheln:** Das Inventar-Dashboard zeigt die Skills wieder als Kacheln, gruppiert nach Themen, mit deutscher Kurzbeschreibung und Ampel, dazu ein Filter nach Ergebnis (ohne JavaScript). Die Themen vergibt die KI passend zum jeweiligen Bestand (`--categories`); sie ändern nie die Ampel. `--render-inventory` stellt eine gespeicherte Bestandsdatei ohne erneuten Scan dar.
 - **Codex-Profile** für Kommandozeile, App und IDE (`--surface`). Das Profil dokumentiert den Kontext, beweist aber keine App-Rechte.
 
 ## 1.0.3 – 2026-09-04

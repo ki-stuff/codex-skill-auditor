@@ -39,6 +39,12 @@ def build_parser(edition='codex') -> argparse.ArgumentParser:
     parser.add_argument("--skills-root", action="append", type=Path, default=[], help="Skill-Verzeichnis; ersetzt die Standard-Skill-Wurzeln. Für mehrere Wurzeln wiederholen.")
     parser.add_argument("--plugins-root", action="append", type=Path, default=[], help="Plugin-Verzeichnis; ersetzt die Standard-Plugin-Wurzeln. Für mehrere Wurzeln wiederholen.")
     parser.add_argument("--reports-dir", type=Path, help="Ordner mit früheren Audit-Reports")
+    parser.add_argument("--categories", type=Path,
+                        help='JSON mit Themen je Skill für die Kacheln: {"skill": {"category": "...", "summary": "..."}}; '
+                             'ändert kein Ergebnis')
+    parser.add_argument("--render-inventory", type=Path,
+                        help="Gespeicherte Bestandsdatei (aus --inventory --output) ohne neuen Scan als HTML darstellen; "
+                             "nur mit --inventory-html")
     return parser
 
 
@@ -57,6 +63,26 @@ def _main(argv: Optional[list[str]] = None, edition='codex') -> int:
         print(json.dumps(capability_report(edition, args.surface), ensure_ascii=False, indent=2))
         return 0
 
+    if args.render_inventory:
+        if edition == 'claude-desktop':
+            parser.error('Kein Host-Inventar in diesem Profil')
+        if args.inventory or args.skill_paths or not args.inventory_html or args.output or args.html:
+            parser.error('--render-inventory nur mit --inventory-html und optional --categories verwenden')
+        from .inventory import load_saved_inventory, load_categories
+        if args.inventory_html.exists():
+            raise ValueError("Zieldatei existiert bereits; bitte einen neuen Dateinamen wählen")
+        entries = load_saved_inventory(args.render_inventory)
+        categories = load_categories(args.categories) if args.categories else None
+        html_path = args.inventory_html
+        if html_path.suffix.lower() != ".html":
+            html_path = html_path / "skill-inventar.html"
+        write_inventory_html(entries, html_path, categories=categories,
+                             notice='Dargestellt aus einer gespeicherten Bestandsdatei, ohne neuen Scan. '
+                                    'Der Prüfstand entspricht dem Zeitpunkt, zu dem die Datei erstellt wurde.')
+        print('HTML-Dashboard am gewählten Ziel gespeichert.', file=sys.stderr)
+        return 0
+    if args.categories and not args.inventory_html:
+        parser.error('--categories wirkt nur zusammen mit --inventory-html')
     if args.inventory_html and not args.inventory:
         parser.error("--inventory-html kann nur zusammen mit --inventory verwendet werden")
     if args.html and args.inventory:
@@ -81,6 +107,10 @@ def _main(argv: Optional[list[str]] = None, edition='codex') -> int:
                                  "bitte einen Speicherort außerhalb der Skill-Ordner wählen")
             if requested and requested.exists() and requested.suffix.lower() in {'.json', '.html'}:
                 raise ValueError("Zieldatei existiert bereits; bitte einen neuen Dateinamen wählen")
+        categories = None
+        if args.categories:
+            from .inventory import load_categories
+            categories = load_categories(args.categories)  # vor dem Scan prüfen
         if edition == 'claude-code':
             entries = scan_claude_inventory(skill_roots, plugin_roots, args.reports_dir, profile, args.surface)
         else:
@@ -95,7 +125,7 @@ def _main(argv: Optional[list[str]] = None, edition='codex') -> int:
             html_path = args.inventory_html
             if html_path.suffix.lower() != ".html":
                 html_path = html_path / "skill-inventar.html"
-            write_inventory_html(entries, html_path)
+            write_inventory_html(entries, html_path, categories=categories)
             print('HTML-Dashboard am gewählten Ziel gespeichert.', file=sys.stderr)
         if args.json_stdout:
             print(json.dumps(entries, indent=2, ensure_ascii=False))

@@ -15,7 +15,7 @@ Das Ergebnis ist eine Ampel mit konkretem nächsten Schritt:
 
 Risiko, Prüfabdeckung und Aktualität werden getrennt ausgewiesen. Gelbe und graue Ergebnisse erhalten einen kopierbaren Hilfsprompt. Erkannte Geheimwerte werden maskiert, Rohbelege zurückgehalten. Ein Warnwort wie „never“ vor einer gefährlichen Anweisung hebt den Befund nicht auf.
 
-Auf Wunsch erstellt der Auditor ein Inventar der installierten Codex Skills, auch als HTML-Dashboard (`--inventory --inventory-html <neue-datei>.html`). Berichte entstehen nur an einem ausdrücklich gewählten neuen Ziel außerhalb der geprüften Ordner.
+Auf Wunsch erstellt der Auditor ein Inventar der installierten Codex Skills, auch als HTML-Dashboard mit Kacheln nach Themen und Filter nach Ergebnis. Die Themen vergibt die KI passend zum Bestand (`--categories`); `--render-inventory` stellt eine gespeicherte Bestandsdatei ohne neuen Scan dar. Berichte entstehen nur an einem ausdrücklich gewählten neuen Ziel außerhalb der geprüften Ordner.
 
 **Voraussetzung:** Python ab 3.11, nur Standardbibliothek, keine automatische Nachinstallation.
 

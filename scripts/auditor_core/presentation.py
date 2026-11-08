@@ -144,7 +144,53 @@ def brief_reason(data):
     }.get(status, 'Die vorhandenen Angaben müssen eingeordnet werden.')
 
 
-def dashboard_sections(items, noun='Prüfobjekte', notices=''):
+FILTERS = [('all', 'Alle'), ('red', 'Nicht verwenden'), ('amber', 'Prüfen'),
+           ('gray', 'Prüfung offen'), ('green', 'Unauffällig')]
+
+
+def tiles_section(items):
+    """Kacheln nach Kategorie mit reinem CSS-Filter (Radio-Buttons, kein Skript)."""
+    esc = html.escape
+    order = {status: i for i, status in enumerate(STATUS_VIEW)}
+    groups = {}
+    for item in items:
+        groups.setdefault(item.get('category') or 'Ohne Kategorie', []).append(item)
+    names = sorted(groups, key=lambda name: (name == 'Ohne Kategorie', -len(groups[name]), name.lower()))
+    counts = {color: sum(STATUS_VIEW[item['status']][0] == color for item in items)
+              for color in ('green', 'amber', 'red', 'gray')}
+    counts['all'] = len(items)
+    blocks = ['<section id="alle-objekte"><div class="section-head"><div>'
+              '<h2>Alle Skills nach Themen</h2><p>Kachel anklicken für Einordnung, nächsten Schritt '
+              'und technische Details. Filter zeigt nur Skills mit dem gewählten Ergebnis.</p></div>'
+              '<span class="section-label">' + str(len(items)) + ' Einträge · '
+              + str(len(groups)) + (' Thema' if len(groups) == 1 else ' Themen') + '</span></div>']
+    for key, _ in FILTERS:
+        blocks.append('<input type="radio" name="ergebnisfilter" class="filter-input" id="filter-' + key + '"'
+                      + (' checked' if key == 'all' else '') + '>')
+    blocks.append('<div class="filter-bar" role="group" aria-label="Nach Ergebnis filtern">')
+    for key, label in FILTERS:
+        blocks.append('<label for="filter-' + key + '" class="filter-' + key + '">' + label
+                      + ' <span>' + str(counts[key]) + '</span></label>')
+    blocks.append('</div><div class="category-groups">')
+    for name in names:
+        group = sorted(groups[name], key=lambda item: (order.get(item['status'], 99), item['name'].lower()))
+        blocks.append('<div class="category-group"><h3 class="category-title">' + esc(name)
+                      + ' <span>(' + str(len(group)) + ')</span></h3><div class="tile-grid">')
+        for item in group:
+            color = STATUS_VIEW[item['status']][0]
+            blocks.append('<details class="tile ' + color + '-tile" id="' + item['id'] + '" data-status="' + item['status'] + '" data-color="'
+                          + color + '"><summary><span class="tile-head"><strong>' + esc(item['name'])
+                          + '</strong>' + status_badge(item['status']) + '</span><span class="tile-summary">'
+                          + esc(item.get('summary') or item['description']) + '</span>'
+                          + ('<span class="row-note">' + esc(item['note']) + '</span>' if item['note'] else '')
+                          + '</summary><div class="skill-content"><p class="plain-reason">' + esc(item['reason'])
+                          + '</p>' + item['details'] + '</div></details>')
+        blocks.append('</div></div>')
+    blocks.append('</div></section>')
+    return ''.join(blocks)
+
+
+def dashboard_sections(items, noun='Prüfobjekte', notices='', layout='list'):
     """Shared passive layout for audit and inventory; inputs are public masked data."""
     esc = html.escape
     order = {status: i for i, status in enumerate(STATUS_VIEW)}
@@ -184,6 +230,30 @@ def dashboard_sections(items, noun='Prüfobjekte', notices=''):
                   '<p>Auffällige Ergebnisse und offene Prüfbereiche.</p></div>'
                   '<span class="section-label">Handlungsbedarf</span></div>')
     red = [item for item in items if item['status'] == 'reject']
+    if layout == 'tiles':
+        # Bestandsübersicht: kompakt, damit die Themen-Kacheln nicht weit nach unten rutschen.
+        if red:
+            blocks.append('<div class="attention-grid">')
+            for item in red:
+                reason = ' '.join(str(item['reason']).split())
+                reason = reason if len(reason) <= 120 else reason[:120].rsplit(' ', 1)[0] + ' …'
+                blocks.append('<a class="attention-tile" href="#' + item['id'] + '"><span class="tile-head"><strong>'
+                              + esc(item['name']) + '</strong>' + status_badge(item['status'])
+                              + '</span><span class="tile-summary">' + esc(reason) + '</span>'
+                              + ('<span class="row-note">' + esc(item['note']) + '</span>' if item['note'] else '')
+                              + '</a>')
+            blocks.append('</div>')
+        amber = sum(STATUS_VIEW[item['status']][0] == 'amber' for item in items)
+        gray = sum(STATUS_VIEW[item['status']][0] == 'gray' for item in items)
+        if amber or gray:
+            parts = []
+            if amber:
+                parts.append('<strong>' + str(amber) + '</strong> zum Prüfen (Filter „Prüfen“)')
+            if gray:
+                parts.append('<strong>' + str(gray) + '</strong> mit offener Prüfung (Filter „Prüfung offen“)')
+            blocks.append('<p class="attention-more">' + ('Außerdem ' if red else '') + ' und '.join(parts)
+                          + '. <a href="#alle-objekte">Zu den Themen-Kacheln ↓</a></p>')
+        red = []
     if red:
         blocks.append('<div class="urgent-grid">')
         for item in red:
@@ -194,7 +264,7 @@ def dashboard_sections(items, noun='Prüfobjekte', notices=''):
                           + ('<p class="coverage-note">' + esc(item['note']) + '</p>' if item['note'] else '')
                           + '<a href="#' + item['id'] + '">Zum Eintrag mit allen Details ↗</a></article>')
         blocks.append('</div>')
-    other = [item for item in items if item['status'] not in {'clear', 'reject'}]
+    other = [item for item in items if item['status'] not in {'clear', 'reject'}] if layout != 'tiles' else []
     if other:
         blocks.append('<div class="review-strip">')
         for item in other:
@@ -208,7 +278,11 @@ def dashboard_sections(items, noun='Prüfobjekte', notices=''):
         blocks.append('<p class="empty">' + ('Keine auffälligen Befunde im geprüften Textumfang. '
                       'Die manuelle Bewertung bleibt ausstehend.' if items else 'Keine Prüfobjekte vorhanden.')
                       + '</p>')
-    blocks.append('</section><section id="alle-objekte"><div class="section-head"><div>'
+    blocks.append('</section>')
+    if layout == 'tiles':
+        blocks.append(tiles_section(items))
+        return ''.join(blocks) + reading_guide(tiles=True)
+    blocks.append('<section id="alle-objekte"><div class="section-head"><div>'
                   '<h2>Alle Einträge im Überblick</h2><p>Eintrag aufklappen für Einordnung, nächsten Schritt '
                   'und technische Details.</p></div><span class="section-label">' + str(len(items))
                   + ' Einträge</span></div><div class="skill-list">'
@@ -225,14 +299,20 @@ def dashboard_sections(items, noun='Prüfobjekte', notices=''):
                       + status_badge(item['status']) + '<span class="chevron" aria-hidden="true"></span>'
                       '</summary><div class="skill-content"><p class="plain-reason">' + esc(item['reason'])
                       + '</p>' + item['details'] + '</div></details>')
-    blocks.append('</div></section><aside class="reading-guide" id="einordnung">'
-                  '<span class="guide-icon" aria-hidden="true">i</span><div><h3>So liest du diese Auswertung.</h3>'
-                  '<p>Grün bedeutet: Im geprüften Textumfang gibt es keinen offensichtlichen Befund. '
-                  'Es ist keine Freigabe oder Sicherheitsgarantie. Gelb braucht eine Klärung oder erneute Prüfung. '
-                  'Rot bedeutet: zunächst nicht verwenden. Grau zeigt eine nicht ausgeführte oder unzureichende Prüfung. '
-                  'Eine Prüflücke kann auch zusätzlich zu einem roten Befund bestehen. '
-                  'Historische Warnungen bleiben als unbestätigte Berichtsangaben erkennbar.</p></div></aside>')
-    return ''.join(blocks)
+    blocks.append('</div></section>')
+    return ''.join(blocks) + reading_guide()
+
+
+def reading_guide(tiles=False):
+    return ('<aside class="reading-guide" id="einordnung">'
+            '<span class="guide-icon" aria-hidden="true">i</span><div><h3>So liest du diese Auswertung.</h3>'
+            '<p>Grün bedeutet: Im geprüften Textumfang gibt es keinen offensichtlichen Befund. '
+            'Es ist keine Freigabe oder Sicherheitsgarantie. Gelb braucht eine Klärung oder erneute Prüfung. '
+            'Rot bedeutet: zunächst nicht verwenden. Grau zeigt eine nicht ausgeführte oder unzureichende Prüfung. '
+            'Eine Prüflücke kann auch zusätzlich zu einem roten Befund bestehen. '
+            'Historische Warnungen bleiben als unbestätigte Berichtsangaben erkennbar.'
+            + (' Themen und Kurzbeschreibungen der Kacheln stammen aus einer manuellen Zuordnung '
+               'und ändern kein Ergebnis.' if tiles else '') + '</p></div></aside>')
 
 
 def render_audit_html(results):

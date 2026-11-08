@@ -307,9 +307,70 @@ INVENTORY_STATUS_META = {
 }
 
 
-def render_inventory_html(entries: list[dict], template_path: Optional[Path] = None) -> str:
+CATEGORY_FILE_LIMIT = 1_000_000
+CATEGORY_LIMITS = {'entries': 5000, 'category': 60, 'summary': 240}
+
+
+def _read_limited(path: Path, limit: int, label: str) -> str:
+    with guarded_path(Path(path)) as stream:
+        raw = stream.read(limit + 1)
+    if len(raw) > limit:
+        raise ValueError(label + ' ist zu groß')
+    try:
+        return raw.decode('utf-8-sig')
+    except UnicodeError:
+        raise ValueError(label + ' ist keine UTF-8-Textdatei') from None
+
+
+def load_categories(path: Path) -> dict:
+    """Liest die von der KI vergebenen Themen: {"skill": {"category": "...", "summary": "..."}}.
+
+    Die Werte sind reine Anzeige-Texte. Sie werden maskiert, gekürzt und ändern
+    nie Status, Risiko oder Abdeckung eines Eintrags.
+    """
+    from .formats import strict_json
+    from .privacy import safe_text
+    data = strict_json(_read_limited(path, CATEGORY_FILE_LIMIT, 'Kategorien-Datei'))
+    if not isinstance(data, dict):
+        raise ValueError('Kategorien-Datei muss ein JSON-Objekt {"skill-name": {...}} sein')
+    if len(data) > CATEGORY_LIMITS['entries']:
+        raise ValueError('Kategorien-Datei enthält zu viele Einträge')
+    result = {}
+    for name, value in data.items():
+        if not isinstance(value, dict) or not isinstance(value.get('category', ''), str) \
+                or not isinstance(value.get('summary', ''), str):
+            raise ValueError('Kategorien-Eintrag muss "category" und optional "summary" als Text enthalten')
+        category = ' '.join(safe_text(value.get('category', '')).split())[:CATEGORY_LIMITS['category']]
+        summary = ' '.join(safe_text(value.get('summary', '')).split())[:CATEGORY_LIMITS['summary']]
+        result[str(name)] = {'category': category or 'Ohne Kategorie', 'summary': summary}
+    return result
+
+
+def load_saved_inventory(path: Path) -> 'InventoryEntries':
+    """Liest eine zuvor mit --output gespeicherte Bestandsdatei für eine neue Darstellung.
+
+    Kein erneuter Scan. Die Datei wird wie fremde Eingabe behandelt: strikt
+    geparst, Struktur geprüft und beim Darstellen erneut maskiert.
+    """
+    from .formats import strict_json
+    # Eigene Ausgabedatei: deutlich mehr Knoten als ein Manifest, aber weiterhin begrenzt.
+    data = strict_json(_read_limited(path, 64 * 1024 * 1024, 'Bestandsdatei'), max_nodes=5_000_000)
+    if not isinstance(data, list) or not all(isinstance(e, dict) and isinstance(e.get('name'), str)
+                                             and isinstance(e.get('status'), str) for e in data):
+        raise ValueError('Bestandsdatei hat nicht das erwartete Format (Ausgabe von --inventory --output)')
+    return InventoryEntries(data, [])
+
+
+def _short(text: str, limit: int = 170) -> str:
+    text = ' '.join(str(text).split())
+    return text if len(text) <= limit else text[:limit].rsplit(' ', 1)[0] + ' …'
+
+
+def render_inventory_html(entries: list[dict], template_path: Optional[Path] = None,
+                          categories: Optional[dict] = None, notice: str = '') -> str:
     """Erzeugt das gemeinsame Layout; vorhandene Urteile bleiben unverändert."""
     from .guidance import next_steps
+    categories = categories or {}
     entries = safe_entries(entries)
     items, notes = [], []
     for entry in entries:
@@ -333,7 +394,9 @@ def render_inventory_html(entries: list[dict], template_path: Optional[Path] = N
         if status in {'reject', 'caution'} and entry.get('coverage', {}).get('status') != 'complete_for_text_scope':
             note += (' · ' if note else '') + 'Zusätzliche Prüflücke: ' + coverage
         reason = (brief_reason(current) if current and not historical else
-                  'Vorliegende Berichtsangabe; Herkunft unbestätigt. ' + str(entry.get('verdict') or label))
+                  ('Ein älterer Prüfbericht im Skill-Ordner meldet dieses Ergebnis; seine Herkunft ist '
+                   'unbestätigt. Der aktuelle Scan hebt die Warnung nicht auf, bitte die Fundstellen selbst prüfen.'
+                   if historical else 'Für diesen Eintrag liegt kein aktueller Scan vor: ' + str(entry.get('verdict') or label)))
         path = html.escape(str(entry.get('path') or 'Unbekannter Pfad'))
         sources = html.escape(', '.join(str(source) for source in entry.get('sources', [])) or 'unbekannt')
         metadata = (
@@ -359,18 +422,26 @@ def render_inventory_html(entries: list[dict], template_path: Optional[Path] = N
         if current:
             details += '<h4>Aktueller unabhängiger Scan</h4>' + report_sections_html(current)
         details += metadata
+        name = str(entry.get('name') or 'Unbenannter Skill')
+        assigned = categories.get(name, {})
+        description = str(entry.get('description') or 'Keine Beschreibung verfügbar.')
         items.append({
-            'id': 'objekt-' + str(len(items) + 1), 'name': str(entry.get('name') or 'Unbenannter Skill'),
-            'status': status, 'description': str(entry.get('description') or 'Keine Beschreibung verfügbar.'),
+            'id': 'objekt-' + str(len(items) + 1), 'name': name,
+            'status': status, 'description': description,
+            'category': assigned.get('category') or 'Ohne Kategorie',
+            'summary': assigned.get('summary') or _short(description),
             'reason': reason, 'step': help_data['steps'][0], 'scope': coverage,
             'note': note, 'details': details,
         })
-    return document(dashboard_sections(items, noun='Skills', notices=''.join(notes)),
+    if notice:
+        notes.insert(0, '<aside class="inventory-notice">' + html.escape(notice) + '</aside>')
+    return document(dashboard_sections(items, noun='Skills', notices=''.join(notes), layout='tiles'),
                     len(items), title='Skill-Bestandsübersicht', template_path=template_path)
 
-def write_inventory_html(entries: list[dict], output_path: Path) -> Path:
+def write_inventory_html(entries: list[dict], output_path: Path, categories: Optional[dict] = None,
+                         notice: str = '') -> Path:
     """Schreibt das Dashboard nur an das ausdrücklich gewählte Ziel."""
-    return write_new_output(output_path, render_inventory_html(entries),
+    return write_new_output(output_path, render_inventory_html(entries, categories=categories, notice=notice),
                             getattr(entries, 'input_roots', [e["path"] for e in entries if e.get("path")]))
 
 

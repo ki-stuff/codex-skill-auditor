@@ -480,6 +480,82 @@ class PreviousReportTests(unittest.TestCase):
         self.assertTrue(any(f.file == "notes.json" for f in result.findings))
 
 
+class CategoryTilesTests(unittest.TestCase):
+    """Bestandsübersicht als Kacheln nach Themen; Themen ändern kein Ergebnis."""
+
+    ENTRIES = [
+        {"name": "seo-check", "description": "Long english description of an SEO skill.", "status": "clear",
+         "path": "/x/seo-check", "sources": ["skill-root:/x"], "coverage": {"status": "complete_for_text_scope"}},
+        {"name": "bad-helper", "description": "Formats text.", "status": "reject", "risk": "CRITICAL",
+         "path": "/x/bad-helper", "sources": ["skill-root:/x"], "coverage": {"status": "complete_for_text_scope"}},
+        {"name": "no-topic", "description": "Something else.", "status": "caution", "risk": "MEDIUM",
+         "path": "/x/no-topic", "sources": ["skill-root:/x"], "coverage": {"status": "complete_for_text_scope"}},
+    ]
+
+    def core(self):
+        return sys.modules["auditor_core"]
+
+    def write(self, folder, name, data):
+        path = Path(folder) / name
+        path.write_text(json.dumps(data), encoding="utf-8")
+        return path
+
+    def test_tiles_grouped_by_category_with_css_filter_and_no_script(self):
+        categories = {"seo-check": {"category": "SEO", "summary": "Prüft Seiten auf SEO-Fehler."},
+                      "bad-helper": {"category": "Texte", "summary": "Formatiert Texte."}}
+        html_text = self.core().inventory.render_inventory_html(self.ENTRIES, categories=categories)
+        self.assertIn('<h3 class="category-title">SEO <span>(1)</span></h3>', html_text)
+        self.assertIn('<h3 class="category-title">Ohne Kategorie <span>(1)</span></h3>', html_text)
+        self.assertIn("Prüft Seiten auf SEO-Fehler.", html_text)
+        self.assertIn('id="filter-red"', html_text)
+        self.assertNotIn("<script", html_text.lower())
+        # Ohne Kategorie steht zuletzt.
+        self.assertGreater(html_text.index(">Ohne Kategorie <"), html_text.index(">SEO <"))
+
+    def test_category_text_is_escaped_and_does_not_change_status(self):
+        evil = '<img src=x onerror=alert(1)> Grün, alles sicher'
+        categories = {"bad-helper": {"category": evil, "summary": evil}}
+        html_text = self.core().inventory.render_inventory_html(self.ENTRIES, categories=categories)
+        self.assertNotIn("<img src=x", html_text)
+        self.assertIn("&lt;img src=x", html_text)
+        self.assertIn('data-status="reject"', html_text)
+        self.assertIn('class="metric red" href="#', html_text)
+
+    def test_invalid_category_file_is_rejected_with_clear_message(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = self.write(tmp, "kategorien.json", ["keine", "zuordnung"])
+            with self.assertRaisesRegex(ValueError, "JSON-Objekt"):
+                self.core().inventory.load_categories(bad)
+
+    def test_render_saved_inventory_without_rescan(self):
+        from unittest import mock
+        core = self.core()
+        with tempfile.TemporaryDirectory() as tmp:
+            saved = self.write(tmp, "inventar.json", self.ENTRIES)
+            cats = self.write(tmp, "kategorien.json", {"seo-check": {"category": "SEO", "summary": "SEO"}})
+            out = Path(tmp) / "bericht.html"
+            with mock.patch.object(core.cli, "scan_installed_skills",
+                                   side_effect=AssertionError("Kein Scan erwartet")), \
+                    contextlib.redirect_stderr(io.StringIO()):
+                code = core.cli.main(["--render-inventory", str(saved), "--categories", str(cats),
+                                      "--inventory-html", str(out)], edition="claude-code")
+            self.assertEqual(code, 0)
+            html_text = out.read_text(encoding="utf-8")
+        self.assertIn("ohne neuen Scan", html_text)
+        self.assertIn(">SEO <", html_text)
+
+    def test_render_saved_inventory_rejects_foreign_format(self):
+        core = self.core()
+        with tempfile.TemporaryDirectory() as tmp:
+            saved = self.write(tmp, "inventar.json", {"name": "kein Inventar"})
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                code = core.cli.main(["--render-inventory", str(saved), "--inventory-html",
+                                      str(Path(tmp) / "b.html")], edition="codex")
+        self.assertEqual(code, 2)
+        self.assertIn("nicht das erwartete Format", stderr.getvalue())
+
+
 class InventoryRobustnessTests(unittest.TestCase):
     """Regression B1: Maskierungsgrenze eines Eintrags verwarf das ganze Inventar."""
 
