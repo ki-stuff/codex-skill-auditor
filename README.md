@@ -21,6 +21,12 @@ Auf Wunsch erstellt der Auditor ein Inventar der installierten Codex Skills, auc
 
 **Installation:** Den Ordner `codex-skill-auditor` nach `~/.agents/skills/` kopieren (Windows: `%USERPROFILE%\.agents\skills\`) und in einem neuen Codex-Chat `$codex-skill-auditor` aufrufen.
 
+**Update von 1.0.x:**
+
+1. `python --version` prüfen: Version 1.1 braucht **Python ab 3.11**. Mit älterem Python meldet der Auditor nur „Python ab 3.11 erforderlich“.
+2. Den alten Ordner `~/.agents/skills/codex-skill-auditor` außerhalb des Skill-Verzeichnisses sichern, entfernen und den neuen Ordner hineinkopieren, nicht darüberkopieren. Danach Codex neu starten.
+3. Berichte entstehen nur noch an einem ausdrücklich gewählten Ziel (`--output`, `--html`, `--inventory-html`), nie im geprüften Ordner. Eine `audit-result.json` früherer Fassungen in Skill-Ordnern wird erkannt und nicht als Skill-Inhalt gewertet; meldete sie Rot, erscheint der Skill als unbestätigte Warnung aus einem früheren Bericht. Fundstellen prüfen und die alte Datei danach löschen.
+
 Einstieg: [SKILL.md](SKILL.md), [Prüfverfahren](references/edition-workflow.md), [Hilfe bei Befunden](references/hilfe-bei-befunden.md). `BUNDLE.json` listet die Datei-Hashes des Pakets. Schwesterfassungen: [skill-auditor](https://github.com/ki-stuff/skill-auditor) für Claude Code, [skill-auditor-desktop](https://github.com/ki-stuff/skill-auditor-desktop) für Claude Desktop und claude.ai.
 
 ## English
