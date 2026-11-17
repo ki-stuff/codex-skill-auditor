@@ -122,7 +122,7 @@ def engine_identity() -> dict:
     help_source = core.parent.parent / 'references' / 'hilfe-bei-befunden.md'
     digest.update(b'references/hilfe-bei-befunden.md')
     digest.update(help_source.read_bytes())
-    return {"name": "om49-auditor-core", "version": SCANNER_VERSION,
+    return {"name": "skill-auditor-core", "version": SCANNER_VERSION,
             "bundle_sha256": digest.hexdigest(), "release": True}
 
 def ruleset_identity() -> dict:

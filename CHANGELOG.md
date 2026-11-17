@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 1.2.1 – 2026-11-17
+
+### Neutrale Darstellung, Kontaktweg
+
+- **Neutrales Dashboard:** Kopf- und Fußzeile zeigen nur noch „Skill Auditor“, ohne Anbieterkennzeichen und ohne externe Links.
+- **Kernname** im JSON-Bericht jetzt `skill-auditor-core` (gemeinsamer Kern 1.2.1, auch in `skill-auditor` 2.7.1). Berichte älterer Fassungen mit dem bisherigen Kernnamen bleiben lesbar; sie werden wie bei jeder Kernänderung als „Kern geändert“ markiert.
+- **README:** bekannte Grenze bei Warnwörtern in derselben Zeile, Hinweis auf die Erkennungslücke der Fassungen 1.0.x, Kontaktweg über GitHub-Issues.
+- **Änderungsverlauf 1.0.1:** Namen fremder Skills und Bewertungen fremder Dienste neutralisiert.
+- Scannerregeln, Ampellogik und Schutzgrenzen unverändert.
+
 ## 1.2.0 – 2026-11-08
 
 ### Startdialog und aktive Hilfe
@@ -57,9 +67,9 @@
 
 ### Aus realen Praxistests gelernt
 
-- `security-best-practices` aus `openai/skills`: V1.0.0 meldete bei 13 reinen Dokumentationsdateien 177 Treffer und ein rotes Scanner-Rohurteil. Die manuelle Prüfung zeigte, dass Sicherheitsbegriffe und Negativbeispiele über lange Dateien hinweg fälschlich kombiniert wurden.
-- `brand-voice` aus `affaan-m/ECC` über `skills.sh`: V1.0.0 meldete grün und keine Treffer. Die manuelle Prüfung erkannte dennoch das Einlesen öffentlicher X- und Webseiteninhalte als Risiko für indirekte Prompt-Injection. Auf `skills.sh` bewerteten zwei Dienste den Skill mit „Pass“, Snyk dagegen mit „Medium“.
-- Mindestens ein auf `skills.sh` sichtbarer Audit bezog sich auf einen anderen Commit als der aktuell geprüfte Download. Audit-Badges gelten daher nur zusammen mit einem passenden Inhaltsstand.
+- Ein Dokumentations-Skill zu Sicherheitspraktiken: V1.0.0 meldete bei 13 reinen Dokumentationsdateien 177 Treffer und ein rotes Scanner-Rohurteil. Die manuelle Prüfung zeigte, dass Sicherheitsbegriffe und Negativbeispiele über lange Dateien hinweg fälschlich kombiniert wurden.
+- Ein Skill aus skills.sh, der öffentliche Web- und Social-Media-Inhalte einliest: V1.0.0 meldete grün und keine Treffer. Die manuelle Prüfung erkannte dennoch das Einlesen dieser Inhalte als Risiko für indirekte Prompt-Injection.
+- Audit-Badges gelten nur zusammen mit dem Inhaltsstand, auf den sie sich beziehen; ein Badge kann sich auf einen anderen Commit beziehen als den geprüften Download.
 
 ### Verbessert
 
